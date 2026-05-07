@@ -1,6 +1,11 @@
 # medical-insurance-datawarehouse
 
-# Transformation Matrix
+## Star Schema
+
+![Star Schema](docs/star_schema.png)
+
+
+## Transformation Matrix
 
 | Target Field | Target Table | Source Field | Source Table | Transformation Rule |
 |---|---|---|---|---|
