@@ -2,7 +2,7 @@ import pandas as pd
 import random
 from datetime import date, timedelta
 
-df = pd.read_csv('insurance.csv')
+df = pd.read_csv('data/insurance.csv')
 
 def random_date():
     start = date(2020, 1, 1)
@@ -11,4 +11,4 @@ def random_date():
 
 df['intakedate'] = [random_date() for _ in range(len(df))]
 
-df.to_csv('insurance.csv', index=False)
+df.to_csv('data/insurance.csv', index=False)

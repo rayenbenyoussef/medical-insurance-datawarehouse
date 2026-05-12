@@ -70,7 +70,7 @@ begin
    end loop;
    commit;
 end;
-
+/
 create or replace procedure load_bmi_dim is
    v_id_bmi bmi_dim.id_bmi%type;
 begin
@@ -86,7 +86,7 @@ begin
    end loop;
    commit;
 end;
-
+/
 create or replace procedure load_charges_fact is
    v_id_patient patient_dim.id_patient%type;
    v_id_time    time_dim.id_time%type;
@@ -105,28 +105,34 @@ begin
              intakedate
         from insurance
    ) loop
-      select id_patient
+      select min(id_patient)
         into v_id_patient
         from patient_dim
        where age = rec.age
-         and gender = rec.gender
-         and children = rec.children;
-      select id_time
+         and sex = rec.gender
+         and children_number = rec.children;
+
+      select min(id_time)
         into v_id_time
         from time_dim
-       where full_date = rec.intakedate;
-      select id_bmi
+       where full_date = to_date(rec.intakedate,
+        'DD-MON-YY');
+
+      select min(id_bmi)
         into v_id_bmi
         from bmi_dim
        where bmi = rec.bmi;
-      select id_region
+
+      select min(id_region)
         into v_id_region
         from region_dim
        where region_name = rec.region;
-      select id_smoker
+
+      select min(id_smoker)
         into v_id_smoker
         from smoker_dim
        where is_smoker = rec.smoker;
+
       insert into charges_fact values ( v_id_patient,
                                         v_id_time,
                                         v_id_bmi,
@@ -135,6 +141,16 @@ begin
                                         rec.charges );
    end loop;
    commit;
+end;
+/
+create or replace procedure load_all_data is
+begin
+   load_time_dim;
+   load_patient_dim;
+   load_smoker_dim;
+   load_region_dim;
+   load_bmi_dim;
+   load_charges_fact;
 end;
 /
 create or replace procedure delete_all_data is
