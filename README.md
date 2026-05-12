@@ -1,5 +1,9 @@
 # medical-insurance-datawarehouse
 
+## Link of the dataset source
+
+https://www.kaggle.com/datasets/mirichoi0218/insurance
+
 ## Star Schema
 
 ![Star Schema](docs/star_schema.png)
