@@ -55,7 +55,7 @@ create sequence region_seq start with 1 increment by 1 nocycle;
 create sequence bmi_seq start with 1 increment by 1 nocycle;
 create sequence fact_seq start with 1 increment by 1 nocycle;
 
-create function get_age_group (
+create or replace function get_age_group (
    age patient_dim.age%type
 ) return varchar2 is
 begin
@@ -69,8 +69,8 @@ begin
       return 'Elderly';
    end if;
 end;
-
-create function get_season (
+/
+create or replace function get_season (
    month number
 ) return varchar2 is
 begin
@@ -90,8 +90,8 @@ begin
       return 'Autumn';
    end if;
 end;
-
-create function get_bmi_range (
+/
+create or replace function get_bmi_range (
    bmi bmi_dim.bmi%type
 ) return varchar2 is
 begin

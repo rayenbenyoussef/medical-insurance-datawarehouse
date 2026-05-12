@@ -1,6 +1,5 @@
-create or replace directory insurance_dir as 'F:\code\medical-insurance-datawarehouse\data';
-
-grant read,write on directory insurance_dir to rayen;
+CREATE OR REPLACE DIRECTORY insurance_dir AS '/home/oracle/data';
+grant read,write on directory insurance_dir to SYS;
 
 create table insurance (
    age      number,

@@ -8,6 +8,8 @@ create or replace procedure load_tables is
    id_region  number;
    id_bmi     number;
    id_fact    number;
+
+   intake_date date;
 begin
    for c in c_insurance loop
       select patient_seq.nextval
@@ -32,29 +34,15 @@ begin
       insert into patient_dim values ( id_patient,
                                        c.age,
                                        get_age_group(c.age),
-                                       c.sex,
+                                       c.gender,
                                        c.children );
+    intake_date := date '2025-01-01' + trunc(dbms_random.value(0, 1200));
       insert into time_dim values ( id_time,
-                                    date '2025-01-01' + trunc(dbms_random.value(
-                                       0,
-                                       1200
-                                    )),
-                                    extract(month from date '2025-01-01' + trunc(dbms_random.value(
-                                       0,
-                                       1200
-                                    ))),
-                                    extract(day from date '2025-01-01' + trunc(dbms_random.value(
-                                       0,
-                                       1200
-                                    ))),
-                                    extract(year from date '2025-01-01' + trunc(dbms_random.value(
-                                       0,
-                                       1200
-                                    ))),
-                                    get_season(extract(month from date '2025-01-01' + trunc(dbms_random.value(
-                                       0,
-                                       1200
-                                    )))) );
+                                    intake_date,
+                                    extract(year from intake_date),
+                                    extract(month from intake_date),
+                                    extract(day from intake_date),
+                                    get_season(extract(month from intake_date) ) );
       insert into smoker_dim values ( id_smoker,
                                       c.smoker );
       insert into region_dim values ( id_region,
@@ -72,3 +60,18 @@ begin
 
    end loop;
 end;
+/
+CREATE OR REPLACE PROCEDURE delete_all_data IS
+BEGIN
+   DELETE FROM charges_fact;
+   DELETE FROM patient_dim;
+   DELETE FROM time_dim;
+   DELETE FROM bmi_dim;
+   DELETE FROM region_dim;
+   DELETE FROM smoker_dim;
+   COMMIT;
+END;
+/
+
+
+
