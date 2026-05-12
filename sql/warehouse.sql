@@ -29,13 +29,14 @@ create table bmi_dim (
    bmi_range varchar2(30)
 );
 create table charges_fact (
-   id_fact       number primary key,
-   id_patient    number,
+   id_patient    number ,
    id_intakedate number,
    id_bmi        number,
    id_region     number,
    id_smoker     number,
    charges       number(10,2),
+
+   CONSTRAINT pk_charges_fact PRIMARY KEY ( id_patient, id_intakedate, id_bmi, id_region, id_smoker ),
    constraint fk_patient foreign key ( id_patient )
       references patient_dim ( id_patient ),
    constraint fk_time foreign key ( id_intakedate )
@@ -48,12 +49,11 @@ create table charges_fact (
       references smoker_dim ( id_smoker )
 );
 
-create sequence patient_seq start with 1 increment by 1 nocycle;
-create sequence time_seq start with 1 increment by 1 nocycle;
-create sequence smoker_seq start with 1 increment by 1 nocycle;
-create sequence region_seq start with 1 increment by 1 nocycle;
-create sequence bmi_seq start with 1 increment by 1 nocycle;
-create sequence fact_seq start with 1 increment by 1 nocycle;
+create sequence patient_seq start with 1 increment by 1 ;
+create sequence time_seq start with 1 increment by 1 ;
+create sequence smoker_seq start with 1 increment by 1 ;
+create sequence region_seq start with 1 increment by 1 ;
+create sequence bmi_seq start with 1 increment by 1 ;
 
 create or replace function get_age_group (
    age patient_dim.age%type

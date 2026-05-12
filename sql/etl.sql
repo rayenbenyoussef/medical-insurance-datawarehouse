@@ -1,77 +1,150 @@
-create or replace procedure load_tables is
-   cursor c_insurance is
-   select *
-     from insurance;
-   id_patient number;
-   id_time    number;
-   id_smoker  number;
-   id_region  number;
-   id_bmi     number;
-   id_fact    number;
-
-   intake_date date;
+create or replace procedure load_time_dim is
+   v_id_time time_dim.id_time%type;
 begin
-   for c in c_insurance loop
-      select patient_seq.nextval
-        into id_patient
-        from dual;
-      select time_seq.nextval
-        into id_time
-        from dual;
-      select smoker_seq.nextval
-        into id_smoker
-        from dual;
-      select region_seq.nextval
-        into id_region
-        from dual;
-      select bmi_seq.nextval
-        into id_bmi
-        from dual;
-      select fact_seq.nextval
-        into id_fact
-        from dual;
-
-      insert into patient_dim values ( id_patient,
-                                       c.age,
-                                       get_age_group(c.age),
-                                       c.gender,
-                                       c.children );
-    intake_date := date '2025-01-01' + trunc(dbms_random.value(0, 1200));
-      insert into time_dim values ( id_time,
-                                    intake_date,
-                                    extract(year from intake_date),
-                                    extract(month from intake_date),
-                                    extract(day from intake_date),
-                                    get_season(extract(month from intake_date) ) );
-      insert into smoker_dim values ( id_smoker,
-                                      c.smoker );
-      insert into region_dim values ( id_region,
-                                      c.region );
-      insert into bmi_dim values ( id_bmi,
-                                   c.bmi,
-                                   get_bmi_range(c.bmi) );
-      insert into charges_fact values ( id_fact,
-                                        id_patient,
-                                        id_time,
-                                        id_bmi,
-                                        id_region,
-                                        id_smoker,
-                                        c.charges );
-
+   for rec in (
+      select distinct intakedate
+        from insurance
+   ) loop
+      v_id_time := time_seq.nextval;
+      insert into time_dim (
+         id_time,
+         full_date,
+         year,
+         month,
+         day,
+         season
+      ) values ( v_id_time,
+                 rec.intakedate,
+                 extract(year from rec.intakedate),
+                 extract(month from rec.intakedate),
+                 extract(day from rec.intakedate),
+                 get_season(extract(month from rec.intakedate)) );
    end loop;
+   commit;
 end;
 /
-CREATE OR REPLACE PROCEDURE delete_all_data IS
-BEGIN
-   DELETE FROM charges_fact;
-   DELETE FROM patient_dim;
-   DELETE FROM time_dim;
-   DELETE FROM bmi_dim;
-   DELETE FROM region_dim;
-   DELETE FROM smoker_dim;
-   COMMIT;
-END;
+create or replace procedure load_patient_dim is
+   v_id_patient patient_dim.id_patient%type;
+begin
+   for rec in (
+      select distinct age,
+                      gender,
+                      children
+        from insurance
+       order by age
+   ) loop
+      v_id_patient := patient_seq.nextval;
+      insert into patient_dim values ( v_id_patient,
+                                       rec.age,
+                                       get_age_group(rec.age),
+                                       rec.gender,
+                                       rec.children );
+   end loop;
+   commit;
+end;
 /
+create or replace procedure load_smoker_dim is
+   v_id_smoker smoker_dim.id_smoker%type;
+begin
+   for rec in (
+      select distinct smoker
+        from insurance
+   ) loop
+      v_id_smoker := smoker_seq.nextval;
+      insert into smoker_dim values ( v_id_smoker,
+                                      rec.smoker );
+   end loop;
+   commit;
+end;
+/
+create or replace procedure load_region_dim is
+   v_id_region region_dim.id_region%type;
+begin
+   for rec in (
+      select distinct region
+        from insurance
+   ) loop
+      v_id_region := region_seq.nextval;
+      insert into region_dim values ( v_id_region,
+                                      rec.region );
+   end loop;
+   commit;
+end;
 
+create or replace procedure load_bmi_dim is
+   v_id_bmi bmi_dim.id_bmi%type;
+begin
+   for rec in (
+      select distinct bmi
+        from insurance
+       order by bmi
+   ) loop
+      v_id_bmi := bmi_seq.nextval;
+      insert into bmi_dim values ( v_id_bmi,
+                                   rec.bmi,
+                                   get_bmi_range(rec.bmi) );
+   end loop;
+   commit;
+end;
 
-
+create or replace procedure load_charges_fact is
+   v_id_patient patient_dim.id_patient%type;
+   v_id_time    time_dim.id_time%type;
+   v_id_bmi     bmi_dim.id_bmi%type;
+   v_id_region  region_dim.id_region%type;
+   v_id_smoker  smoker_dim.id_smoker%type;
+begin
+   for rec in (
+      select age,
+             gender,
+             bmi,
+             children,
+             smoker,
+             region,
+             charges,
+             intakedate
+        from insurance
+   ) loop
+      select id_patient
+        into v_id_patient
+        from patient_dim
+       where age = rec.age
+         and gender = rec.gender
+         and children = rec.children;
+      select id_time
+        into v_id_time
+        from time_dim
+       where full_date = rec.intakedate;
+      select id_bmi
+        into v_id_bmi
+        from bmi_dim
+       where bmi = rec.bmi;
+      select id_region
+        into v_id_region
+        from region_dim
+       where region_name = rec.region;
+      select id_smoker
+        into v_id_smoker
+        from smoker_dim
+       where is_smoker = rec.smoker;
+      insert into charges_fact values ( v_id_patient,
+                                        v_id_time,
+                                        v_id_bmi,
+                                        v_id_region,
+                                        v_id_smoker,
+                                        rec.charges );
+   end loop;
+   commit;
+end;
+/
+create or replace procedure delete_all_data is
+begin
+   delete from charges_fact;
+   delete from patient_dim;
+   delete from time_dim;
+   delete from bmi_dim;
+   delete from region_dim;
+   delete from smoker_dim;
+   commit;
+end;
+/
